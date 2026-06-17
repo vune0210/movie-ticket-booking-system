@@ -1,0 +1,61 @@
+services:
+  # ========================
+  # MongoDB
+  # ========================
+  mongo:
+    image: mongo:7
+    container_name: movie_booking_db
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app_network
+
+  # ========================
+  # Node.js Backend
+  # ========================
+  server:
+    build: .
+    container_name: movie_booking_api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/movie_booking_db
+      - JWT_SECRET=movie_booking_super_secret_key_2026
+      - JWT_EXPIRE=30d
+      - NODE_ENV=development
+    depends_on:
+      - mongo
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - app_network
+
+  # ========================
+  # Mongo Express (Admin UI - Optional)
+  # ========================
+  mongo-express:
+    image: mongo-express
+    container_name: movie_booking_admin
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017/
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      - mongo
+    networks:
+      - app_network
+
+volumes:
+  mongo_data:
+
+networks:
+  app_network:
+    driver: bridge
