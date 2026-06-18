@@ -280,6 +280,221 @@
   font-weight: 700;
 }
 
+.seat-selection-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.seat-map-card {
+  overflow-x: auto;
+}
+
+.screen-wrap {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.screen-indicator {
+  width: 60%;
+  height: 4px;
+  background: var(--accent-gradient);
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  box-shadow: var(--accent-glow);
+}
+
+.screen-wrap span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.seat-map-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.seat-row-label {
+  width: 24px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.seat-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.seat-btn.available {
+  background: var(--seat-available);
+  color: var(--text-primary);
+}
+
+.seat-btn.available:hover {
+  background: var(--seat-available-hover);
+  transform: translateY(-2px);
+}
+
+.seat-btn.vip.available {
+  background: var(--seat-vip);
+  color: var(--text-inverse);
+}
+
+.seat-btn.vip.available:hover {
+  background: var(--seat-vip-hover);
+}
+
+.seat-btn.selected,
+.seat-btn.vip.selected {
+  background: var(--seat-selected);
+  color: white;
+  box-shadow: 0 0 14px rgba(255, 77, 77, 0.55);
+  transform: translateY(-2px);
+}
+
+.seat-btn.booked {
+  background: var(--seat-booked);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.seat-btn.locking {
+  background: var(--seat-locking);
+  color: var(--text-inverse);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-top: 24px;
+}
+
+.seat-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.seat-legend i {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+}
+
+.legend-available {
+  background: var(--seat-available);
+}
+
+.legend-selected {
+  background: var(--seat-selected);
+}
+
+.legend-booked {
+  background: var(--seat-booked);
+  opacity: 0.4;
+}
+
+.legend-locking {
+  background: var(--seat-locking);
+}
+
+.legend-vip {
+  background: var(--seat-vip);
+}
+
+.seat-summary {
+  position: sticky;
+  top: calc(var(--navbar-height) + 18px);
+}
+
+.seat-summary h3 {
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+}
+
+.selected-seat-list {
+  display: grid;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.selected-seat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.selected-seat-item div {
+  display: grid;
+  gap: 2px;
+}
+
+.selected-seat-item strong {
+  color: var(--text-primary);
+}
+
+.selected-seat-item span,
+.seat-summary-empty {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.selected-seat-item b {
+  color: var(--accent-hover);
+  white-space: nowrap;
+}
+
+.seat-summary-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.seat-summary-total span {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.seat-summary-total strong {
+  color: var(--seat-vip);
+  font-size: 1.15rem;
+}
+
 @media (max-width: 900px) {
   .booking-stepper {
     overflow-x: auto;
@@ -291,6 +506,14 @@
 
   .cinema-card-grid {
     grid-template-columns: 1fr;
+  }
+
+  .seat-selection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .seat-summary {
+    position: static;
   }
 }
 
@@ -311,6 +534,10 @@
   .showtime-button-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .seat-map-card {
+    padding: 16px;
+  }
 }
 
 @media (max-width: 520px) {
@@ -328,5 +555,15 @@
 
   .showtime-button-grid {
     grid-template-columns: 1fr;
+  }
+
+  .seat-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.62rem;
+  }
+
+  .seat-row-label {
+    width: 20px;
   }
 }
