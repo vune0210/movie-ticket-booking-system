@@ -11,6 +11,7 @@ import MoviesPage from './pages/Movies/MoviesPage';
 import MovieDetailPage from './pages/Movies/MovieDetailPage';
 import BookingPage from './pages/Booking/BookingPage';
 import PaymentPage from './pages/Payment/PaymentPage';
+import HistoryPage from './pages/History/HistoryPage';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
 import OtpVerifyPage from './pages/Auth/OtpVerifyPage';
@@ -29,6 +30,7 @@ function App() {
             <Route path="movies/:id" element={<MovieDetailPage />} />
             <Route path="booking/:movieId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
             <Route path="payment/:bookingId" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
+            <Route path="history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="verify-otp" element={<OtpVerifyPage />} />
