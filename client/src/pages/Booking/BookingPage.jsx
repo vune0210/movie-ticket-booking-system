@@ -1,17 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
   FiCheck,
   FiChevronLeft,
   FiClock,
+  FiCreditCard,
   FiMapPin,
+  FiMinus,
   FiPhone,
+  FiPlus,
+  FiShoppingBag,
+  FiSmartphone,
   FiStar,
 } from 'react-icons/fi';
 import bookingService from '../../services/bookingService';
+import { useCountdown } from '../../hooks/useCountdown';
 import { formatCurrency } from '../../utils/formatCurrency';
-import { formatDate, formatTime, isSameDay } from '../../utils/formatDate';
+import { formatDate, formatDateTime, formatTime, isSameDay } from '../../utils/formatDate';
 import './BookingPage.css';
 
 const STEPS = ['Chọn rạp', 'Suất chiếu', 'Chọn ghế', 'Bắp nước', 'Xác nhận'];
@@ -34,6 +40,7 @@ const groupShowtimesByDate = (showtimes) => showtimes.reduce((groups, showtime) 
 
 const BookingPage = () => {
   const { movieId } = useParams();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [movieInfo, setMovieInfo] = useState(null);
   const [cinemas, setCinemas] = useState([]);
@@ -45,15 +52,58 @@ const BookingPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [lockData, setLockData] = useState(null);
   const [seatMap, setSeatMap] = useState(null);
+  const [concessionGroups, setConcessionGroups] = useState({});
+  const [concessions, setConcessions] = useState([]);
   const [loadingCinemas, setLoadingCinemas] = useState(true);
   const [loadingShowtimes, setLoadingShowtimes] = useState(false);
   const [loadingSeats, setLoadingSeats] = useState(false);
   const [lockingSeats, setLockingSeats] = useState(false);
+  const [loadingConcessions, setLoadingConcessions] = useState(false);
+  const [creatingBooking, setCreatingBooking] = useState(false);
 
   const groupedShowtimes = useMemo(() => groupShowtimesByDate(showtimes), [showtimes]);
+  const concessionById = useMemo(
+    () => concessions.reduce((map, item) => ({ ...map, [item._id]: item }), {}),
+    [concessions],
+  );
+  const selectedConcessionDetails = useMemo(
+    () => selectedConcessions
+      .map((item) => ({
+        ...item,
+        concession: concessionById[item.concessionId],
+      }))
+      .filter((item) => item.concession),
+    [selectedConcessions, concessionById],
+  );
   const seatTotal = useMemo(
     () => selectedSeats.reduce((total, seat) => total + Number(seat.price || 0), 0),
     [selectedSeats],
+  );
+  const concessionTotal = useMemo(
+    () => selectedConcessionDetails.reduce(
+      (total, item) => total + Number(item.concession.price || 0) * item.quantity,
+      0,
+    ),
+    [selectedConcessionDetails],
+  );
+  const grandTotal = seatTotal + concessionTotal;
+
+  const handleLockExpired = useCallback(() => {
+    if (!lockData?.expiresAt || step < 4) {
+      return;
+    }
+
+    toast.error('Hết thời gian giữ ghế');
+    setLockData(null);
+    setSelectedSeats([]);
+    setSelectedConcessions([]);
+    setPaymentMethod('');
+    setStep(2);
+  }, [lockData?.expiresAt, step]);
+
+  const countdown = useCountdown(
+    lockData?.expiresAt,
+    lockData?.expiresAt ? handleLockExpired : undefined,
   );
 
   useEffect(() => {
@@ -127,6 +177,39 @@ const BookingPage = () => {
       loadSeatMap();
     }
   }, [step, selectedShowtime]);
+
+  useEffect(() => {
+    if (step !== 4 || concessions.length > 0) {
+      return;
+    }
+
+    const fetchConcessions = async () => {
+      setLoadingConcessions(true);
+
+      try {
+        const res = await bookingService.getConcessions();
+        const payload = res.data?.data || {};
+        const flatConcessions = payload.concessions || Object.values(payload.grouped || {}).flat();
+        const fallbackGroups = flatConcessions.reduce((groups, item) => {
+          const category = item.category || 'Khác';
+
+          return {
+            ...groups,
+            [category]: [...(groups[category] || []), item],
+          };
+        }, {});
+
+        setConcessionGroups(payload.grouped || fallbackGroups);
+        setConcessions(flatConcessions);
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Lỗi hệ thống');
+      } finally {
+        setLoadingConcessions(false);
+      }
+    };
+
+    fetchConcessions();
+  }, [step, concessions.length]);
 
   const handleSelectCinema = (cinema) => {
     setSelectedCinema(cinema);
@@ -213,6 +296,63 @@ const BookingPage = () => {
       }
     } finally {
       setLockingSeats(false);
+    }
+  };
+
+  const handleConcessionQuantity = (concessionId, delta) => {
+    setSelectedConcessions((current) => {
+      const existing = current.find((item) => item.concessionId === concessionId);
+      const nextQuantity = Math.max(0, (existing?.quantity || 0) + delta);
+
+      if (!existing && nextQuantity > 0) {
+        return [...current, { concessionId, quantity: nextQuantity }];
+      }
+
+      if (nextQuantity === 0) {
+        return current.filter((item) => item.concessionId !== concessionId);
+      }
+
+      return current.map((item) => (
+        item.concessionId === concessionId ? { ...item, quantity: nextQuantity } : item
+      ));
+    });
+  };
+
+  const getConcessionQuantity = (concessionId) => (
+    selectedConcessions.find((item) => item.concessionId === concessionId)?.quantity || 0
+  );
+
+  const handleSkipConcessions = () => {
+    setSelectedConcessions([]);
+    setStep(5);
+  };
+
+  const handleCreateBooking = async () => {
+    if (!paymentMethod || !selectedShowtime?._id || selectedSeats.length === 0) {
+      return;
+    }
+
+    setCreatingBooking(true);
+
+    try {
+      const res = await bookingService.createBooking({
+        showtimeId: selectedShowtime._id,
+        seatIds: selectedSeats.map((seat) => seat._id),
+        concessions: selectedConcessions,
+        paymentMethod,
+      });
+      const booking = res.data?.data?.booking;
+
+      if (!booking?._id) {
+        throw new Error('Missing booking id');
+      }
+
+      toast.success('Tạo đặt vé thành công');
+      navigate(`/payment/${booking._id}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi hệ thống');
+    } finally {
+      setCreatingBooking(false);
     }
   };
 
@@ -452,14 +592,180 @@ const BookingPage = () => {
         )}
 
         {step === 4 && (
-          <section className="booking-section">
-            <div className="booking-placeholder glass-card">Step 4 - Coming soon</div>
+          <section className="booking-section slide-up">
+            <div className="booking-section-title with-action">
+              <div>
+                <h2 className="section-title">Chọn bắp nước</h2>
+                <p>Chọn thêm đồ ăn, thức uống cho buổi xem phim.</p>
+              </div>
+              <div className={`booking-countdown ${countdown.isUrgent ? 'urgent' : ''} ${countdown.isWarning ? 'warning' : ''}`}>
+                <span>Giữ ghế còn</span>
+                <strong>{countdown.formatted}</strong>
+              </div>
+            </div>
+
+            {loadingConcessions ? (
+              <div className="loader-container"><div className="loader"></div></div>
+            ) : (
+              <>
+                <div className="concession-groups">
+                  {Object.entries(concessionGroups).map(([category, items]) => (
+                    <div className="concession-section" key={category}>
+                      <h3>{category}</h3>
+                      <div className="concession-grid">
+                        {items.map((item) => {
+                          const quantity = getConcessionQuantity(item._id);
+
+                          return (
+                            <div className="concession-card glass-card" key={item._id}>
+                              <div className="concession-image">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.name} />
+                                ) : (
+                                  <FiShoppingBag />
+                                )}
+                              </div>
+                              <div className="concession-info">
+                                <h4>{item.name}</h4>
+                                <p>{item.description || item.category}</p>
+                                <strong>{formatCurrency(item.price)}</strong>
+                              </div>
+                              <div className="quantity-counter">
+                                <button
+                                  type="button"
+                                  onClick={() => handleConcessionQuantity(item._id, -1)}
+                                  disabled={quantity === 0}
+                                >
+                                  <FiMinus />
+                                </button>
+                                <span>{quantity}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleConcessionQuantity(item._id, 1)}
+                                >
+                                  <FiPlus />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="booking-footer glass-card">
+                  <div>
+                    <span>Tổng tiền bắp nước</span>
+                    <strong>{formatCurrency(concessionTotal)}</strong>
+                  </div>
+                  <div className="booking-footer-actions">
+                    <button className="btn btn-secondary" type="button" onClick={handleSkipConcessions}>
+                      Bỏ qua
+                    </button>
+                    <button className="btn btn-primary" type="button" onClick={() => setStep(5)}>
+                      Tiếp tục
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </section>
         )}
 
         {step === 5 && (
-          <section className="booking-section">
-            <div className="booking-placeholder glass-card">Step 5 - Coming soon</div>
+          <section className="booking-section slide-up">
+            <div className="booking-section-title with-action">
+              <div>
+                <h2 className="section-title">Xác nhận đặt vé</h2>
+                <p>Kiểm tra thông tin và chọn phương thức thanh toán.</p>
+              </div>
+              <div className={`booking-countdown ${countdown.isUrgent ? 'urgent' : ''} ${countdown.isWarning ? 'warning' : ''}`}>
+                <span>Giữ ghế còn</span>
+                <strong>{countdown.formatted}</strong>
+              </div>
+            </div>
+
+            <div className="confirm-layout">
+              <div className="order-summary glass-card">
+                <h3>Thông tin đặt vé</h3>
+
+                <div className="summary-list">
+                  <div><span>Phim</span><strong>{movieInfo?.title}</strong></div>
+                  <div><span>Rạp</span><strong>{selectedCinema?.name}</strong></div>
+                  <div><span>Suất chiếu</span><strong>{selectedShowtime?.timeStart ? formatDateTime(selectedShowtime.timeStart) : ''}</strong></div>
+                  <div>
+                    <span>Phòng</span>
+                    <strong>
+                      {selectedShowtime?.room?.name}
+                      {selectedShowtime?.room?.typeRoom ? ` · ${selectedShowtime.room.typeRoom}` : ''}
+                    </strong>
+                  </div>
+                  <div><span>Ghế</span><strong>{selectedSeats.map((seat) => seat.seatNumber).join(', ')}</strong></div>
+                </div>
+
+                <div className="summary-concessions">
+                  <h4>Bắp nước</h4>
+                  {selectedConcessionDetails.length > 0 ? selectedConcessionDetails.map((item) => (
+                    <div key={item.concessionId}>
+                      <span>{item.concession.name} x{item.quantity}</span>
+                      <strong>{formatCurrency(item.concession.price * item.quantity)}</strong>
+                    </div>
+                  )) : (
+                    <p>Không chọn bắp nước.</p>
+                  )}
+                </div>
+
+                <div className="price-breakdown">
+                  <div><span>Tiền ghế</span><strong>{formatCurrency(seatTotal)}</strong></div>
+                  <div><span>Tiền bắp nước</span><strong>{formatCurrency(concessionTotal)}</strong></div>
+                  <div className="grand-total"><span>Tổng cộng</span><strong>{formatCurrency(grandTotal)}</strong></div>
+                </div>
+              </div>
+
+              <div className="payment-panel glass-card">
+                <h3>Phương thức thanh toán</h3>
+                <div className="payment-methods">
+                  <label className={`payment-card ${paymentMethod === 'atm_bank' ? 'selected' : ''}`}>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="atm_bank"
+                      checked={paymentMethod === 'atm_bank'}
+                      onChange={(event) => setPaymentMethod(event.target.value)}
+                    />
+                    <FiCreditCard />
+                    <span>Thẻ ATM/Ngân hàng</span>
+                  </label>
+
+                  <label className={`payment-card ${paymentMethod === 'qr_wallet' ? 'selected' : ''}`}>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="qr_wallet"
+                      checked={paymentMethod === 'qr_wallet'}
+                      onChange={(event) => setPaymentMethod(event.target.value)}
+                    />
+                    <FiSmartphone />
+                    <span>Ví điện tử QR</span>
+                  </label>
+                </div>
+
+                <div className="payment-actions">
+                  <button className="btn btn-secondary" type="button" onClick={() => setStep(4)}>
+                    <FiChevronLeft /> Quay lại
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    disabled={!paymentMethod || creatingBooking}
+                    onClick={handleCreateBooking}
+                  >
+                    {creatingBooking ? 'Đang đặt vé...' : 'Đặt vé'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </section>
         )}
       </div>
