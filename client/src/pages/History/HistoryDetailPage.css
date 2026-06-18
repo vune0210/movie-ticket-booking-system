@@ -1,0 +1,300 @@
+.history-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ticket-detail-card,
+.detail-table-card,
+.price-detail-card,
+.refund-section,
+.refund-receipt {
+  margin-bottom: 18px;
+}
+
+.ticket-movie {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+.ticket-movie img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.ticket-movie h1 {
+  margin-bottom: 10px;
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.ticket-movie p {
+  margin-top: 8px;
+  color: var(--text-secondary);
+}
+
+.movie-tags,
+.movie-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.movie-tags span,
+.movie-facts span {
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ticket-section-grid,
+.detail-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ticket-section {
+  padding: 14px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.ticket-section h2,
+.detail-table-card h2,
+.price-detail-card h2,
+.refund-section h2 {
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+}
+
+.ticket-section p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.ticket-section strong {
+  color: var(--text-primary);
+}
+
+.detail-table {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.detail-table-head,
+.detail-table-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+.detail-table-head {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.detail-table-row {
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.detail-table-row strong {
+  color: var(--seat-vip);
+  text-align: right;
+}
+
+.muted-text {
+  color: var(--text-muted);
+}
+
+.price-breakdown-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.price-breakdown-grid div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.price-breakdown-grid span {
+  color: var(--text-secondary);
+}
+
+.price-breakdown-grid strong {
+  color: var(--text-primary);
+}
+
+.price-breakdown-grid .total {
+  border-bottom: none;
+}
+
+.price-breakdown-grid .total span,
+.price-breakdown-grid .total strong {
+  color: var(--seat-vip);
+  font-size: 1.18rem;
+}
+
+.refund-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.refund-section p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.refund-receipt {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-color: rgba(0, 214, 143, 0.28);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.refund-receipt svg {
+  flex: 0 0 auto;
+  color: var(--success);
+  font-size: 3rem;
+}
+
+.refund-receipt p {
+  margin-top: 5px;
+  color: var(--text-secondary);
+}
+
+.refund-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.68);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.refund-modal {
+  position: relative;
+  width: min(560px, 100%);
+}
+
+.refund-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.refund-modal h2 {
+  margin-bottom: 18px;
+  padding-right: 42px;
+}
+
+.refund-modal-info {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.refund-modal-info div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.refund-modal-info span {
+  color: var(--text-secondary);
+}
+
+.refund-modal-info strong {
+  color: var(--seat-vip);
+}
+
+.refund-modal textarea {
+  resize: vertical;
+}
+
+.refund-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .ticket-section-grid,
+  .detail-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .ticket-movie {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-movie img {
+    max-width: 180px;
+  }
+
+  .history-detail-header,
+  .refund-section,
+  .refund-receipt,
+  .refund-modal-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .history-detail-header .btn,
+  .refund-section .btn,
+  .refund-modal-actions .btn {
+    width: 100%;
+  }
+
+  .detail-table-head,
+  .detail-table-row {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-table-row strong {
+    text-align: left;
+  }
+}
