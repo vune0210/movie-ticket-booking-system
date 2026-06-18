@@ -7,6 +7,7 @@ import ProtectedRoute from './components/UI/ProtectedRoute';
 
 // Pages
 import HomePage from './pages/Home/HomePage';
+import MoviesPage from './pages/Movies/MoviesPage';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
 import OtpVerifyPage from './pages/Auth/OtpVerifyPage';
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             {/* Public */}
             <Route index element={<HomePage />} />
+            <Route path="movies" element={<MoviesPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
             <Route path="verify-otp" element={<OtpVerifyPage />} />
